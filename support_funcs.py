@@ -1,12 +1,15 @@
 import msgpack
 import pickle
 import json
+from pymongo import MongoClient
 from pprint import pprint
 
+#DUMPERS
 def dump_json(object, filename):
-    with open(filename, mode='w') as f:
-        json.dump(object, f, ensure_ascii=False)
+    with open(filename, mode='w', encoding='UTF-8') as f:
+        json.dump(object, f, ensure_ascii=False, default=str)
 
+# READERS
 def read_msgpack(filename):
     with open(filename, mode='rb') as f:
         return msgpack.load(f)
@@ -15,6 +18,10 @@ def read_pickle(filename):
     with open(filename, mode='rb') as f:
         return pickle.load(f)
     
+def read_json(filename):
+    with open(filename, mode='r', encoding='UTF-8') as f:
+        return json.load(f)
+
 def read_text(filename):
     with open(filename, mode='r', encoding='UTF-8') as f:
         data_rows = f.read().strip('=====\n').split('=====\n')
@@ -25,12 +32,17 @@ def read_text(filename):
         for param_row in data_row.strip().split('\n'):
             [key, value] = param_row.split('::')
             if key in to_int:
-                item[key] = value
-            elif key:
+                item[key] = int(value)
+            else:
                 item[key] = value
         dataset.append(item)
     return dataset
 
-# pprint(read_msgpack('./task1/task_1_item.msgpack'))
-# pprint(read_text('./task2/task_2_item.text'))
-# pprint(read_pkl('./task3/task_3_item.pkl'))
+# MONGO
+def connect_to_mongodb(db_name):
+    client = MongoClient()
+    db = client[db_name]
+    return db
+
+def insert_data_to_mongodb(collection, data):
+    res = collection.insert_many(data)
